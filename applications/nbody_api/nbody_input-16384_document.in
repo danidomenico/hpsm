@@ -1,0 +1,12 @@
+ 65536    #number_of_particles
+ 16384    #block_size
+1.0e+10   #domain_size_x
+1.0e+10   #domain_size_y
+1.0e+10   #domain_size_z
+1.0e+0    #time_interval
+  10      #number_of_timesteps
+  3       #timesteps_between_outputs
+  1       #execute_serial (0 ou 1)
+12345     #random_seed    - não usado
+1.0e+28   #mass_maximum    
+nbody     #base_filename  - não usado

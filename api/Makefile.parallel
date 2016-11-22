@@ -1,0 +1,50 @@
+
+PARALLEL_BACKEND ?= "Serial"
+
+INTERNAL_USE_SERIAL := $(strip $(shell echo $(PARALLEL_BACKEND) | grep Serial | wc -l))
+INTERNAL_USE_STARPU := $(strip $(shell echo $(PARALLEL_BACKEND) | grep StarPU | wc -l))
+INTERNAL_USE_OPENMP := $(strip $(shell echo $(PARALLEL_BACKEND) | grep OpenMP | wc -l))
+
+PARALLEL_CXXFLAGS = -O3 -std=c++11
+PARALLEL_CPPFLAGS = -I./ -I$(PARALLEL_PATH) -I$(PARALLEL_PATH)/serial -I$(PARALLEL_PATH)/openmp -I$(PARALLEL_PATH)/starpu
+PARALLEL_LIBS = -lhpsm
+PARALLEL_LDFLAGS = -L$(shell pwd)
+
+PARALLEL_SRC =
+PARALLEL_HEADERS =
+
+PARALLEL_SRC += $(wildcard $(PARALLEL_PATH)/*.cpp)
+PARALLEL_HEADERS += $(wildcard $(PARALLEL_PATH)/*.hpp)
+ifeq ($(INTERNAL_USE_SERIAL), 1)
+	PARALLEL_SRC += $(wildcard $(PARALLEL_PATH)/serial/*.cpp)
+	PARALLEL_HEADERS += $(wildcard $(PARALLEL_PATH)/serial/*.hpp)
+	PARALLEL_CXXFLAGS += -DBACKEND_SERIAL
+endif
+
+ifeq ($(INTERNAL_USE_OPENMP), 1)
+	PARALLEL_SRC += $(wildcard $(PARALLEL_PATH)/openmp/*.cpp)
+	PARALLEL_HEADERS += $(wildcard $(PARALLEL_PATH)/openmp/*.hpp)
+	PARALLEL_CXXFLAGS += -DBACKEND_OPENMP
+	PARALLEL_LIBS += -fopenmp
+endif
+
+ifeq ($(INTERNAL_USE_STARPU), 1)
+	PARALLEL_SRC += $(wildcard $(PARALLEL_PATH)/starpu/*.cpp)
+	PARALLEL_HEADERS += $(wildcard $(PARALLEL_PATH)/starpu/*.hpp)
+	PARALLEL_CXXFLAGS += -DBACKEND_STARPU `pkg-config --cflags starpu-1.2`
+	PARALLEL_LIBS += `pkg-config --libs starpu-1.2`
+endif
+
+PARALLEL_OBJ = $(PARALLEL_SRC:.cpp=.o)
+PARALLEL_OBJ_LINK = $(notdir $(PARALLEL_OBJ))
+PARALLEL_CPP_DEPENDS = $(PARALLEL_HEADERS)
+
+include $(PARALLEL_PATH)/Makefile.targets
+
+libhpsm.a: $(PARALLEL_OBJ_LINK) $(PARALLEL_SRC) $(PARALLEL_HEADERS)
+	ar rcs $@ $(PARALLEL_OBJ_LINK)
+
+parallel-clean:
+	rm -f $(PARALLEL_OBJ_LINK) libhpsm.a
+
+PARALLEL_LINK_DEPENDS:= libhpsm.a

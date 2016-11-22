@@ -1,0 +1,36 @@
+
+parallel_atomic.o: $(PARALLEL_PATH)/parallel_atomic.cpp  $(PARALLEL_CPP_DEPENDS) $(PARALLEL_HEADERS)
+	$(CXX) $(CXXFLAGS) $(PARALLEL_CXXFLAGS) -c $< -o $@
+
+parallel_backend.o: $(PARALLEL_PATH)/parallel_backend.cpp  $(PARALLEL_CPP_DEPENDS) $(PARALLEL_HEADERS)
+	$(CXX) $(CXXFLAGS) $(PARALLEL_CXXFLAGS) -c $< -o $@
+
+parallel_utils.o: $(PARALLEL_PATH)/parallel_utils.cpp  $(PARALLEL_CPP_DEPENDS) $(PARALLEL_HEADERS)
+	$(CXX) $(CXXFLAGS) $(PARALLEL_CXXFLAGS) -c $< -o $@
+
+parallel_view.o: $(PARALLEL_PATH)/parallel_view.cpp  $(PARALLEL_CPP_DEPENDS) $(PARALLEL_HEADERS)
+	$(CXX) $(CXXFLAGS) $(PARALLEL_CXXFLAGS) -c $< -o $@
+
+ifeq ($(INTERNAL_USE_SERIAL), 1)
+serial_backend.o: $(PARALLEL_PATH)/serial/serial_backend.cpp  $(PARALLEL_CPP_DEPENDS) $(PARALLEL_HEADERS)
+	$(CXX) $(CXXFLAGS) $(PARALLEL_CXXFLAGS) -c $< -o $@
+
+serial_functor.o: $(PARALLEL_PATH)/serial/serial_functor.cpp  $(PARALLEL_CPP_DEPENDS) $(PARALLEL_HEADERS)
+	$(CXX) $(CXXFLAGS) $(PARALLEL_CXXFLAGS) -c $< -o $@
+endif
+
+ifeq ($(INTERNAL_USE_OPENMP), 1)
+openmp_backend.o: $(PARALLEL_PATH)/openmp/openmp_backend.cpp  $(PARALLEL_CPP_DEPENDS) $(PARALLEL_HEADERS)
+	$(CXX) $(CXXFLAGS) $(PARALLEL_CXXFLAGS) -c $< -o $@
+
+openmp_functor.o: $(PARALLEL_PATH)/openmp/openmp_functor.cpp  $(PARALLEL_CPP_DEPENDS) $(PARALLEL_HEADERS)
+	$(CXX) $(CXXFLAGS) $(PARALLEL_CXXFLAGS) -c $< -o $@
+endif
+
+ifeq ($(INTERNAL_USE_STARPU), 1)
+starpu_backend.o: $(PARALLEL_PATH)/starpu/starpu_backend.cpp  $(PARALLEL_CPP_DEPENDS) $(PARALLEL_HEADERS)
+	$(CXX) $(CXXFLAGS) $(PARALLEL_CXXFLAGS) -c $< -o $@
+
+starpu_functor.o: $(PARALLEL_PATH)/starpu/starpu_functor.cpp  $(PARALLEL_CPP_DEPENDS) $(PARALLEL_HEADERS)
+	$(CXX) $(CXXFLAGS) $(PARALLEL_CXXFLAGS) -c $< -o $@
+endif
