@@ -1,0 +1,20 @@
+"Value", "Events_hotspot_1GPU_26CPU.trace.csv", "Duration_hotspot_1GPU_26CPU.trace.csv"
+"11funcHotspot", 1280, 201892.26493
+"Allocating", 357, 8.889844
+"AllocatingReuse", 1785, 2.972024
+"Deinitializing", 27, 5.439023
+"DriverCopy", 3570, 877.650419
+"DriverCopyAsync", 1785, 1733.537525
+"Executing", 890, 8871.7163
+"FetchingInput", 1280, 692.700076
+"Freeing", 357, 4.413899
+"Idle", 1307, 2289.580657
+"Initializing", 27, 140.758645
+"Nothing", 2856, 17684.161476
+"Overhead", 4757, 434.316235
+"PushingOutput", 1280, 1.683208
+"Scheduling", 3867, 3.750072
+"Sleeping", 162, 98158.769728
+"Submitting task", 7120, 873.981661
+"Waiting all tasks", 5, 9321.619278
+"Waiting task", 15, 0.005967

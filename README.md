@@ -12,5 +12,8 @@ constains the HPSM source code.
 - **applications**:
 contains some parallel applications developed with HPSM API.
 
+- **results**:
+contains a journal and some results (data, charts, scripts, traces) from executions using applications implemented with HPSM.
+
 #### Contact:
 Daniel Di Domenico: ddomenico@inf.ufsm.br

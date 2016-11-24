@@ -1,0 +1,1479 @@
+# -*- mode: org -*-
+# -*- coding: utf-8 -*-
+#+STARTUP: overview indent inlineimages logdrawer
+#+TITLE:       Journal
+#+AUTHOR:      DiDomenico
+#+LANGUAGE:    en
+#+TAGS: Orientacao(O) Ideias_Futuras(F)
+#+EXPORT_SELECT_TAGS: Blog
+#+OPTIONS:   H:3 num:t toc:t \n:nil @:t ::t |:t ^:t -:t f:t *:t <:t
+#+OPTIONS:   TeX:t LaTeX:nil skip:nil d:nil todo:t pri:nil tags:not-in-toc
+#+EXPORT_SELECT_TAGS: export
+#+EXPORT_EXCLUDE_TAGS: noexport
+#+COLUMNS: %25ITEM %TODO %3PRIORITY %TAGS
+#+SEQ_TODO: TODO(t!) STARTED(s!) WAITING(w@) APPT(a!) | DONE(d!) CANCELLED(c!) DEFERRED(f!)
+#+LATEX_CLASS: article
+#+LaTeX_CLASS_OPTIONS: [a4paper,11pt]
+#+LATEX_HEADER: \usepackage{times}
+#+LATEX_HEADER: \usepackage[margin=2cm]{geometry}
+#+LATEX_HEADER: \usepackage{placeins}
+
+* Dissertação - API HPSM
+** Orientações
+*** <2016-08-23 Ter>                                           :Orientacao:
+**** Apenas passado o acesso a IDCIN-2.
+*** <2016-08-30 Ter>                                           :Orientacao:
+**** Atualizar gráficos do artigo com escalabilidade forte (variando o número de threads) e fraca (variando o tamanho das entradas).
+**** Gerar gráficos com o R.
+**** Ver para substituir o ljforces por outro benchmark - SNAP;
+**** Testar StarPU com OpenMP - dividindo as tarefas CPU para muitas threads;
+**** Métricas de software - lines of code;
+**** Criar journal da dissertação.
+*** <2016-09-08 Qui>                                           :Orientacao:
+**** Definido que a defesa será em dezembro. Prazos:
+***** Experimentos: até o final de outubro;
+***** Texto: mês de novembro.
+*** <2016-09-23 Sex>                                           :Orientacao:
+**** Em conversa com o professor ficou definido:
+***** Gerar traços das execuções com GPUs e o máxido de threads, a fim de identificar o motivo do melhor desempenho ser obtido com uma thread a menos.
+***** Testar outros escalonadores além do dmda, como dm, dmdar, dmdas;
+***** Realizar testes juntando starPU e OpenMP. A princípio utilizar o escalonador pheft.
+*** <2016-10-20 Qui>                                           :Orientacao:
+**** Rodar a versão StarPU+OMP com Kaapi:
+***** Ver como compila a versão StarPU com o Kaapi 5.4 ou o Kaapi com a versão 4.9;
+***** Verificar afinidade, garantindo que o Kaapi ta processando nos núcleos corretos (socket 0 ou 1);
+**** Gerar gŕaficos com o tempo (ao invés de apenas speedup);
+**** Verificar se o tempo serial é proporcial quando se aumenta as entradas;
+** Comandos
+*** XKaapi with GCC 4.9 compiler
+Configure:
+#+begin_src sh 
+ac_cv_func_malloc_0_nonnull=yes ac_cv_func_realloc_0_nonnull=yes \
+CFLAGS="-std=gnu99" AM_CFLAGS="-std=gnu99" ../configure \
+--prefix=/home/jvlima/daniel/source/xkaapi/install \
+--disable-offload --without-cuda --enable-mode=release \
+--enable-libkomp --without-perfcounter --with-numa
+#+end_src Servidor França :noexport:
+Para ver agendamentos:
+- chandler
+Senha agenda on-line: jvlima xabunfo16@
+** Texto
+*** Estrutura:
+**** Introdução
+**** Programação para aceleradores
+***** Arquiteturas
+Distribuida, compartilhada, aceleradores (GPU e Phi)
+***** Ferramentas de programação paralela
+Clássicas (MPI, OpenMP e CUDA)
+***** Ferramentas multi-CPU e multi-GPU
+***** Trabalhos relacionados
+**** API proposta
+**** Resultados experimentais
+**** Conclusão
+**** Apêndice
+***** C++
+*** Tamanho:
+Entre 60 a 100 páginas
+** Experimentos
+*** Calibragem blocos digitalis-IDCIN-2
+**** NBody:
+existe grande mudança de desempenho a medida que o tamanho do bloco da
+tarefa é aumentado durante o processamento na GPU. 
+Atráves das figuras percebe-se que com bloco de 2048 há um equilíbrio
+entre CPU e GPU. Com 4096, as tarefas são processadas somente na GPU.
+Variando-se o tamanho da entrada, o desempenho permaneceu estavel.
+#+name: fig:idcin2:bloco:nbody:65536speedup
+#+attr_latex: :width .5\textwidth
+#+caption: NBody: speedup sobre a execução serial variando threads e tamanho do bloco - Size: 65536.
+#+RESULTS: fig:idcin2:bloco:nbody:65536speedup
+[[./figuras/calibragem_idcin2/nbody/65536-speedup.pdf]]
+
+#+name: fig:idcin2:bloco:nbody:81190speedup
+#+attr_latex: :width .5\textwidth
+#+caption: NBody: speedup sobre a execução serial variando threads e tamanho do bloco - Size: 81190.
+#+RESULTS: fig:idcin2:bloco:nbody:81190speedup
+[[./figuras/calibragem_idcin2/nbody/81920-speedup.pdf]]
+
+#+name: fig:idcin2:bloco:nbody:98304speedup
+#+attr_latex: :width .5\textwidth
+#+caption: NBody: speedup sobre a execução serial variando threads e tamanho do bloco - Size: 98304.
+#+RESULTS: fig:idcin2:bloco:nbody:98304speedup
+[[./figuras/calibragem_idcin2/nbody/98304-speedup.pdf]]
+
+#+name: fig:idcin2:bloco:nbody:forte-bs2048
+#+attr_latex: :width .5\textwidth
+#+caption: NBody: speedup sobre a execução com máxima configuração variando tamanho da entrada - BS: 2048.
+#+RESULTS: fig:idcin2:bloco:nbody:forte-bs2048
+[[./figuras/calibragem_idcin2/nbody/forte-speedup-bs2048.pdf]]
+
+#+name: fig:idcin2:bloco:nbody:forte-bs4096
+#+attr_latex: :width .5\textwidth
+#+caption: NBody: speedup sobre a execução com máxima configuração variando tamanho da entrada - BS: 4096.
+#+RESULTS: fig:idcin2:bloco:nbody:forte-bs4096
+[[./figuras/calibragem_idcin2/nbody/forte-speedup-bs4096.pdf]]
+
+#+name: fig:idcin2:bloco:nbody:fraca-bs2048
+#+attr_latex: :width .5\textwidth
+#+caption: NBody: speedup sobre a execução com gpus variando número de threads - BS: 2048.
+#+RESULTS: fig:idcin2:bloco:nbody:fraca-bs2048
+[[./figuras/calibragem_idcin2/nbody/fraca-speedup-bs2048.pdf]]
+
+#+name: fig:idcin2:bloco:nbody:fraca-bs4096
+#+attr_latex: :width .5\textwidth
+#+caption: NBody: speedup sobre a execução com gpus variando número de threads - BS: 4096.
+#+RESULTS: fig:idcin2:bloco:nbody:fraca-bs4096
+[[./figuras/calibragem_idcin2/nbody/fraca-speedup-bs4096.pdf]]
+
+#+LATEX: \FloatBarrier
+**** Hotspot:
+com o hotspot, a variação do bloco não afeta o desempenho da GPU,
+indicando que a mesma já está com desempenho máximo.
+Todavia, blocos maiores acabaram prejudicando o processamento na CPU.
+Ao variar o tamanho da entrada, ocorreu um ganho de desempenho, porém
+mínimo.
+#+name: fig:idcin2:bloco:hotspot:12288speedup
+#+attr_latex: :width .5\textwidth
+#+caption: Hotspot: speedup sobre a execução serial variando threads e tamanho do bloco - Size: 12288 x 12288.
+#+RESULTS: fig:idcin2:bloco:hotspot:12288speedup
+[[./figuras/calibragem_idcin2/hotspot/12288-speedup.pdf]]
+
+#+name: fig:idcin2:bloco:hotspot:16384speedup
+#+attr_latex: :width .5\textwidth
+#+caption: Hotspot: speedup sobre a execução serial variando threads e tamanho do bloco - Size: 16384 x 16384.
+#+RESULTS: fig:idcin2:bloco:hotspot:16384speedup
+[[./figuras/calibragem_idcin2/hotspot/16384-speedup.pdf]]
+
+#+name: fig:idcin2:bloco:hotspot:20480speedup
+#+attr_latex: :width .5\textwidth
+#+caption: Hotspot: speedup sobre a execução serial variando threads e tamanho do bloco - Size: 20480 x 20480.
+#+RESULTS: fig:idcin2:bloco:hotspot:20480speedup
+[[./figuras/calibragem_idcin2/hotspot/20480-speedup.pdf]]
+
+#+name: fig:idcin2:bloco:hotspot:forte-bs1024
+#+attr_latex: :width .5\textwidth
+#+caption: Hotspot: speedup sobre a execução com máxima configuração variando tamanho da entrada - BS 1024 x 1024.
+#+RESULTS: fig:idcin2:bloco:hotspot:forte-bs1024
+[[./figuras/calibragem_idcin2/hotspot/forte-speedup-bs1024.pdf]]
+
+#+name: fig:idcin2:bloco:hotspot:fraca-16384
+#+attr_latex: :width .5\textwidth
+#+caption: Hostspot: speedup sobre a execução com máxima configuração variando threads - Size: 16384 x 16384 BS: 1024 x 1024.
+#+RESULTS: fig:idcin2:bloco:hotspot:fraca-16384
+[[./figuras/calibragem_idcin2/hotspot/fraca-speedup-16384.pdf]]
+
+#+name: fig:idcin2:bloco:hotspot:fraca-20480
+#+attr_latex: :width .5\textwidth
+#+caption: Hostspot: speedup sobre a execução com máxima configuração variando threads - Size: 20480 x 20480 BS: 1024 x 1024.
+#+RESULTS: fig:idcin2:bloco:hotspot:fraca-20480
+[[./figuras/calibragem_idcin2/hotspot/fraca-speedup-20480.pdf]]
+
+#+LATEX: \FloatBarrier
+*** Execuções digitalis-IDCIN-2 - NBody, Hotspot e CFD
+**** Speedup by threads:
+#+begin_src
+Sizes: CFD: 131072; Hostspot: 16384 x 16384; NBody: 98304
+Block sizes: CFD: 2048;  Hostspot: 1024 x 1024; NBody: 2048
+#+end_src
+#+name: fig:speedup:threads
+#+begin_src R :results output graphics :file "figuras/resultados_idcin2/speedup-threads.pdf" :exports results :width 8 :height 6 :session org-R 
+library(ggplot2)
+library(plyr)
+entry <- c("BENCH", "backend", "size", "block_size", "thread", "gpus")
+dados_all <- read.csv("./dados/idcin-2/data_R.csv", header=TRUE, sep=";")
+serial <- dados_all[grep("^SERIAL$",dados_all$backend),]
+serial_stat <- ddply(serial, entry, summarise,
+                     n=length(time), mean=mean(time), sd=sd(time),
+                     se=sd/sqrt(n), ci=se*qt(.95/2 + .5, n-1))
+
+# calculate speedup
+dados <- dados_all[grep("SERIAL", dados_all$backend, invert=TRUE),] #eliminate SERIAL
+dados <- dados[((dados$BENCH == "hotspot") & (dados$size == 16384) & (dados$block_size == 1024)) | 
+ 	       ((dados$BENCH == "nbody")   & (dados$size == 98304) & (dados$block_size == 2048)) |
+	       ((dados$BENCH == "cfd")     & (dados$size == 131072) & (dados$block_size == 2048)),]
+dados <- dados[(dados$thread %% 2) == 0,]
+dados$speedup <- 1:nrow(dados)
+for(i in 1:nrow(dados)){
+	name <- dados[i,]$BENCH
+	sz <- dados[i,]$size
+	tserial <- serial_stat[(serial_stat$BENCH == name) & (serial_stat$size == sz),]$mean
+	dados[i,]$speedup <- tserial / dados[i,]$time
+}
+
+# rename GPUs label
+dados[dados$gpus == 0, "gpus"] <- as.character("0 (only CPUs)")
+dados[dados$gpus == 1, "gpus"] <- as.character("1 GPU")
+dados[dados$gpus == 2, "gpus"] <- as.character("2 GPUs")
+dados[dados$gpus == 3, "gpus"] <- as.character("3 GPUs")
+dados[dados$gpus == 4, "gpus"] <- as.character("4 GPUs")
+# rename backends
+dados$backend <- ifelse(dados$backend == "PARALLEL_BACK_KAAPI", "Kaapi", as.character(dados$backend))
+dados$backend <- ifelse(dados$backend == "PARALLEL_BACK_STARPU", "StarPU", as.character(dados$backend))
+dados$backend <- ifelse(dados$backend == "PARALLEL_BACK_OPENMP", "OpenMP", as.character(dados$backend))
+dados$backend <- ifelse(dados$backend == "PARALLEL_BACK_STARPU_OPENMP", "StarPU+OMP", as.character(dados$backend))
+dados$backend <- ifelse(dados$backend == "PARALLEL_BACK_STARPU_KAAPI", "StarPU+Kaapi", as.character(dados$backend))
+
+dados_stat <- ddply(dados, entry, summarise, 
+                     n=length(speedup), mean=mean(speedup), sd=sd(speedup), se=sd/sqrt(n),
+                     ci=se*qt(.95/2 + .5, n-1))
+
+# The errorbars overlapped, so use position_dodge to move them horizontally
+pd <- position_dodge(0.1) # move them .05 to the left and right
+
+ggplot(dados_stat, aes(x=thread, y=mean, color=factor(backend), shape=factor(backend), linetype=factor(backend)))+
+    geom_errorbar(aes(ymin=mean-ci, ymax=mean+ci), color="black", width=.1, position=pd) +
+    geom_point() +
+    geom_line() +
+    theme_bw() +
+    scale_colour_discrete(name="Runtime\nBackend") +
+    scale_shape_discrete(name="Runtime\nBackend") +
+    scale_linetype_discrete(name="Runtime\nBackend") +
+    theme(axis.text.x = element_text(size=8), axis.text.y= element_text(size=8), legend.position="top") + 
+    xlab("Threads") +
+    ylab("Speedup") + 
+    scale_x_continuous(limits=c(-1,28), breaks=seq(0,28,4)) +
+    #scale_y_continuous(limits=c(0,110), breaks=seq(0,100,10)) +
+    facet_grid(BENCH ~ gpus, scales = "free_y")
+#+end_src
+#+caption: Speedup over sequential version by threads and GPUs.
+#+RESULTS: fig:speedup:threads
+[[file:figuras/resultados_idcin2/speedup-threads.pdf]]
+#+LATEX: \FloatBarrier
+**** Time by threads:
+#+begin_src
+Sizes: CFD: 131072; Hostspot: 16384 x 16384; NBody: 98304
+Block sizes: CFD: 2048;  Hostspot: 1024 x 1024; NBody: 2048
+#+end_src
+#+name: fig:time:threads
+#+begin_src R :results output graphics :file "figuras/resultados_idcin2/time-threads.pdf" :exports results :width 8 :height 6 :session org-R 
+library(ggplot2)
+library(plyr)
+entry <- c("BENCH", "backend", "size", "block_size", "thread", "gpus")
+dados_all <- read.csv("./dados/idcin-2/data_R.csv", header=TRUE, sep=";")
+
+# filters
+dados <- dados_all[grep("SERIAL", dados_all$backend, invert=TRUE),] #eliminate SERIAL
+dados <- dados[((dados$BENCH == "hotspot") & (dados$size == 16384) & (dados$block_size == 1024)) | 
+  	       ((dados$BENCH == "nbody") & (dados$size == 98304) & (dados$block_size == 2048)) |
+	       ((dados$BENCH == "cfd") & (dados$size == 131072) & (dados$block_size == 2048)),]
+dados <- dados[(dados$thread %% 2) == 0,]
+
+# rename GPUs label
+dados[dados$gpus == 0, "gpus"] <- as.character("0 (only CPUs)")
+dados[dados$gpus == 1, "gpus"] <- as.character("1 GPU")
+dados[dados$gpus == 2, "gpus"] <- as.character("2 GPUs")
+dados[dados$gpus == 3, "gpus"] <- as.character("3 GPUs")
+dados[dados$gpus == 4, "gpus"] <- as.character("4 GPUs")
+# rename backends
+dados$backend <- ifelse(dados$backend == "PARALLEL_BACK_KAAPI", "Kaapi", as.character(dados$backend))
+dados$backend <- ifelse(dados$backend == "PARALLEL_BACK_STARPU", "StarPU", as.character(dados$backend))
+dados$backend <- ifelse(dados$backend == "PARALLEL_BACK_OPENMP", "OpenMP", as.character(dados$backend))
+dados$backend <- ifelse(dados$backend == "PARALLEL_BACK_STARPU_OPENMP", "StarPU+OMP", as.character(dados$backend))
+dados$backend <- ifelse(dados$backend == "PARALLEL_BACK_STARPU_KAAPI", "StarPU+Kaapi", as.character(dados$backend))
+
+dados_stat <- ddply(dados, entry, summarise, 
+                    n=length(time), mean=mean(time), sd=sd(time),
+                    se=sd/sqrt(n), ci=se*qt(.95/2 + .5, n-1))
+
+# The errorbars overlapped, so use position_dodge to move them horizontally
+pd <- position_dodge(0.1) # move them .05 to the left and right
+
+ggplot(dados_stat, aes(x=thread, y=mean, color=factor(backend), shape=factor(backend), linetype=factor(backend)))+
+    geom_errorbar(aes(ymin=mean-ci, ymax=mean+ci), color="black", width=.1, position=pd) +
+    geom_point() +
+    geom_line() +
+    theme_bw() +
+    scale_colour_discrete(name="Runtime\nBackend") +
+    scale_shape_discrete(name="Runtime\nBackend") +
+    scale_linetype_discrete(name="Runtime\nBackend") +
+    theme(axis.text.x = element_text(size=8), axis.text.y= element_text(size=8), legend.position="top") + 
+    xlab("Threads") +
+    ylab("Time (s)") + 
+    scale_x_continuous(limits=c(-1,28), breaks=seq(0,28,4)) +
+    #scale_y_continuous(limits=c(0,110), breaks=seq(0,100,10)) +
+    facet_grid(BENCH ~ gpus, scales = "free_y")
+#+end_src
+#+caption: Time by threads and GPUs.
+#+RESULTS: fig:time:threads
+[[file:figuras/resultados_idcin2/time-threads.pdf]]
+#+LATEX: \FloatBarrier
+**** Speedup by size (max configuration):
+#+begin_src
+Sizes: 
+  CFD: 98304, 114688, 131072, 147456, 163840; 
+  Hostspot: 12288N, 14336N, 16384N, 18432N, 20480N; 
+  NBody: 65536, 81920, 98304, 114688, 131072;
+Block sizes: 
+  CFD: 2048;  
+  Hostspot: 1024 x 1024; 
+  NBody: 2048
+#+end_src
+#+name: fig:speedup:size
+#+begin_src R :results output graphics :file "figuras/resultados_idcin2/speedup-size.pdf" :exports results :width 8 :height 6 :session org-R 
+library(ggplot2)
+library(plyr)
+entry <- c("BENCH", "backend", "size", "block_size", "thread", "gpus")
+dados_all <- read.csv("./dados/idcin-2/data_R.csv", header=TRUE, sep=";")
+serial <- dados_all[grep("^SERIAL$",dados_all$backend),]
+serial_stat <- ddply(serial, entry, summarise,
+                     n=length(time), mean=mean(time), sd=sd(time),
+                     se=sd/sqrt(n), ci=se*qt(.95/2 + .5, n-1))
+
+# calculate speedup
+dados <- dados_all[grep("SERIAL", dados_all$backend, invert=TRUE),] #eliminate SERIAL
+
+dados <- dados[((dados$BENCH == "hotspot") & (dados$block_size == 1024)) |
+               ((dados$BENCH == "nbody") & (dados$block_size == 2048)) |
+               ((dados$BENCH == "cfd") & (dados$block_size == 2048)),] 
+
+dados <- dados[((dados$thread == 28) & (dados$gpus == 0)) |
+  	       ((dados$thread == 27) & (dados$gpus == 1)) |
+	       ((dados$thread == 26) & (dados$gpus == 2)) |
+	       ((dados$thread == 25) & (dados$gpus == 3)) |
+	       ((dados$thread == 24) & (dados$gpus == 4)) |
+	       ((dados$thread == 0) & (dados$gpus > 0) & (dados$backend == "PARALLEL_BACK_STARPU")),]
+dados$speedup <- 1:nrow(dados)
+for(i in 1:nrow(dados)){
+	name <- dados[i,]$BENCH
+	sz <- dados[i,]$size
+	tserial <- serial_stat[(serial_stat$BENCH == name) & (serial_stat$size == sz),]$mean
+	dados[i,]$speedup <- tserial / dados[i,]$time
+}
+
+# rename GPUs label
+dados[dados$gpus == 0, "gpus"] <- as.character("0 (only CPUs)")
+dados[dados$gpus == 1, "gpus"] <- as.character("1 GPU")
+dados[dados$gpus == 2, "gpus"] <- as.character("2 GPUs")
+dados[dados$gpus == 3, "gpus"] <- as.character("3 GPUs")
+dados[dados$gpus == 4, "gpus"] <- as.character("4 GPUs")
+# rename backends
+dados$backend <- ifelse(dados$backend == "PARALLEL_BACK_KAAPI", "Kaapi", as.character(dados$backend))
+dados$backend <- ifelse(dados$backend == "PARALLEL_BACK_OPENMP", "OpenMP", as.character(dados$backend))
+dados$backend <- ifelse((dados$backend == "PARALLEL_BACK_STARPU") & (dados$thread == 0), "StarPU(GPU)", as.character(dados$backend))
+dados$backend <- ifelse(dados$backend == "PARALLEL_BACK_STARPU", "StarPU(CPU+GPU)", as.character(dados$backend))
+dados$backend <- ifelse(dados$backend == "PARALLEL_BACK_STARPU_OPENMP", "StarPU+OpenMP", as.character(dados$backend))
+dados$backend <- ifelse(dados$backend == "PARALLEL_BACK_STARPU_KAAPI", "StarPU+Kaapi", as.character(dados$backend))
+# rename sizes nbody
+dados$size <- ifelse((dados$size == 65536)  & (dados$BENCH == "nbody"), 1, as.integer(dados$size))
+dados$size <- ifelse((dados$size == 81920)  & (dados$BENCH == "nbody"), 2, as.integer(dados$size))
+dados$size <- ifelse((dados$size == 98304)  & (dados$BENCH == "nbody"), 3, as.integer(dados$size))
+dados$size <- ifelse((dados$size == 114688) & (dados$BENCH == "nbody"), 4, as.integer(dados$size))
+dados$size <- ifelse((dados$size == 131072) & (dados$BENCH == "nbody"), 5, as.integer(dados$size))
+# rename sizes hotspot
+dados$size <- ifelse((dados$size == 12288) & (dados$BENCH == "hotspot"), 1, as.integer(dados$size))
+dados$size <- ifelse((dados$size == 14336) & (dados$BENCH == "hotspot"), 2, as.integer(dados$size))
+dados$size <- ifelse((dados$size == 16384) & (dados$BENCH == "hotspot"), 3, as.integer(dados$size))
+dados$size <- ifelse((dados$size == 18432) & (dados$BENCH == "hotspot"), 4, as.integer(dados$size))
+dados$size <- ifelse((dados$size == 20480) & (dados$BENCH == "hotspot"), 5, as.integer(dados$size))
+# rename sizes cfd
+dados$size <- ifelse((dados$size == 98304) & (dados$BENCH == "cfd"), 1, as.integer(dados$size))
+dados$size <- ifelse((dados$size == 114688) & (dados$BENCH == "cfd"), 2, as.integer(dados$size))
+dados$size <- ifelse((dados$size == 131072) & (dados$BENCH == "cfd"), 3, as.integer(dados$size))
+dados$size <- ifelse((dados$size == 147456) & (dados$BENCH == "cfd"), 4, as.integer(dados$size))
+dados$size <- ifelse((dados$size == 163840) & (dados$BENCH == "cfd"), 5, as.integer(dados$size))
+
+
+dados_stat <- ddply(dados, entry, summarise, 
+                     n=length(speedup), mean=mean(speedup), sd=sd(speedup), se=sd/sqrt(n),
+                     ci=se*qt(.95/2 + .5, n-1))
+# The errorbars overlapped, so use position_dodge to move them horizontally
+pd <- position_dodge(0.1) # move them .05 to the left and right
+
+ggplot(dados_stat, aes(x=size, y=mean, color=factor(backend), shape=factor(backend), linetype=factor(backend)))+
+    geom_errorbar(aes(ymin=mean-ci, ymax=mean+ci), color="black", width=.1, position=pd) +
+    geom_point() +
+    geom_line() +
+    theme_bw() +
+    scale_colour_discrete(name="Runtime\nBackend") +
+    scale_shape_discrete(name="Runtime\nBackend") +
+    scale_linetype_discrete(name="Runtime\nBackend") +
+    theme(axis.text.x = element_text(size=8), axis.text.y= element_text(size=8), legend.position="top") + 
+    xlab("Size") +
+    ylab("Speedup") + 
+    scale_x_continuous(labels=c("", "", "", "", "")) +
+    #scale_y_continuous(limits=c(0,110), breaks=seq(0,100,10)) +
+    facet_grid(BENCH ~ gpus, scales = "free_y")
+#+end_src
+#+caption: Speedup over sequential version by sizes with maximum threads and GPUs.
+#+RESULTS: fig:speedup:size
+[[file:figuras/resultados_idcin2/speedup-size.pdf]]
+#+LATEX: \FloatBarrier
+**** Speedup by size (best configuration):
+#+begin_src
+Config:
+  * CFD: 
+    StarPU:       0GPU+28CPUs, 1GPU+26CPUs, 2GPUs+12CPUs, 
+                  3GPUs+10CPUs, 4GPUs+10CPUs;
+    StarU+OpenMP: 0GPU+28CPUs, 1GPU+10CPUs, 2GPUs+10CPUs, 
+                  3GPUs+10CPUs, 4GPUs+10CPUs;
+    StarPU+Kaapi: 0GPU+28CPUs, 1GPU+10CPUs, 2GPUs+10CPUs, 
+                  3GPUs+10CPUs, 4GPUs+10CPUs;
+  * Hotspot
+    StarPU:       0GPU+28CPUs, 1GPU+26CPUs, 2GPUs+25CPUs, 
+                  3GPUs+24CPUs, 4GPUs+23CPUs;
+    StarU+OpenMP: 0GPU+28CPUs, 1GPU+12CPUs, 2GPUs+12CPUs, 
+                  3GPUs+10CPUs, 4GPUs+10CPUs;
+    StarPU+Kaapi: 0GPU+28CPUs, 1GPU+12CPUs, 2GPUs+12CPUs, 
+                  3GPUs+10CPUs, 4GPUs+10CPUs;
+  * NBody:
+    StarPU:       0GPU+28CPUs, 1GPU+27CPUs, 2GPUs+26CPUs, 
+                  3GPUs+25CPUs, 4GPUs+24CPUs;
+    StarU+OpenMP: 0GPU+28CPUs, 1GPU+27CPUs, 2GPUs+26CPUs, 
+                  3GPUs+25CPUs, 4GPUs+24CPUs;
+    StarPU+Kaapi: 0GPU+28CPUs, 1GPU+27CPUs, 2GPUs+26CPUs, 
+                  3GPUs+25CPUs, 4GPUs+24CPUs;
+Sizes: 
+  CFD: 98304, 114688, 131072, 147456, 163840; 
+  Hostspot: 12288N, 14336N, 16384N, 18432N, 20480N; 
+  NBody: 65536, 81920, 98304, 114688, 131072;
+Block sizes: 
+  CFD: 2048;  
+  Hostspot: 1024 x 1024; 
+  NBody: 2048
+#+end_src
+#+name: fig:speedup:size-best
+#+begin_src R :results output graphics :file "figuras/resultados_idcin2/speedup-size-best.pdf" :exports results :width 8 :height 6 :session org-R 
+library(ggplot2)
+library(plyr)
+entry <- c("BENCH", "backend", "size", "block_size", "thread", "gpus")
+dados_all <- read.csv("./dados/idcin-2/data_R.csv", header=TRUE, sep=";")
+serial <- dados_all[grep("^SERIAL$",dados_all$backend),]
+serial_stat <- ddply(serial, entry, summarise,
+                     n=length(time), mean=mean(time), sd=sd(time),
+                     se=sd/sqrt(n), ci=se*qt(.95/2 + .5, n-1))
+
+# calculate speedup
+dados <- dados_all[grep("SERIAL", dados_all$backend, invert=TRUE),] #eliminate SERIAL
+
+dados <- dados[((dados$BENCH == "hotspot") & (dados$block_size == 1024)) |
+               ((dados$BENCH == "nbody") & (dados$block_size == 2048)) |
+               ((dados$BENCH == "cfd") & (dados$block_size == 2048)),] 
+
+dados <- dados[((dados$thread == 28) & (dados$gpus == 0)) |
+               ((dados$BENCH == "cfd") & 
+                ( ( (dados$backend == "PARALLEL_BACK_STARPU") &
+                    ( ((dados$thread == 26) & (dados$gpus == 1)) | ((dados$thread == 12) & (dados$gpus == 2)) |
+                      ((dados$thread == 10) & (dados$gpus == 3)) | ((dados$thread == 10) & (dados$gpus == 4)) ) ) |
+                  ( ( (dados$backend == "PARALLEL_BACK_STARPU_OPENMP") | (dados$backend == "PARALLEL_BACK_STARPU_KAAPI") ) &
+                    ( ((dados$thread == 10) & (dados$gpus == 1)) | ((dados$thread == 10) & (dados$gpus == 2)) |
+                      ((dados$thread == 10) & (dados$gpus == 3)) | ((dados$thread == 10) & (dados$gpus == 4)) ) ) ) ) |
+               ((dados$BENCH == "hotspot") & 
+                ( ( (dados$backend == "PARALLEL_BACK_STARPU") &
+                    ( ((dados$thread == 26) & (dados$gpus == 1)) | ((dados$thread == 25) & (dados$gpus == 2)) |
+                      ((dados$thread == 24) & (dados$gpus == 3)) | ((dados$thread == 23) & (dados$gpus == 4)) ) ) |
+                  ( ( (dados$backend == "PARALLEL_BACK_STARPU_OPENMP") | (dados$backend == "PARALLEL_BACK_STARPU_KAAPI") ) &
+                    ( ((dados$thread == 12) & (dados$gpus == 1)) | ((dados$thread == 12) & (dados$gpus == 2)) |
+                      ((dados$thread == 10) & (dados$gpus == 3)) | ((dados$thread == 10) & (dados$gpus == 4)) ) ) ) ) |       
+               ((dados$BENCH == "nbody") & 
+                ( ( (dados$backend == "PARALLEL_BACK_STARPU") &
+                    ( ((dados$thread == 27) & (dados$gpus == 1)) | ((dados$thread == 26) & (dados$gpus == 2)) |
+                      ((dados$thread == 25) & (dados$gpus == 3)) | ((dados$thread == 24) & (dados$gpus == 4)) ) ) |
+                  ( ( (dados$backend == "PARALLEL_BACK_STARPU_OPENMP") | (dados$backend == "PARALLEL_BACK_STARPU_KAAPI") ) &
+                    ( ((dados$thread == 27) & (dados$gpus == 1)) | ((dados$thread == 26) & (dados$gpus == 2)) |
+                      ((dados$thread == 25) & (dados$gpus == 3)) | ((dados$thread == 24) & (dados$gpus == 4)) ) ) ) ) |       
+	       ((dados$thread == 0) & (dados$gpus > 0) & (dados$backend == "PARALLEL_BACK_STARPU")),]
+dados$speedup <- 1:nrow(dados)
+for(i in 1:nrow(dados)){
+	name <- dados[i,]$BENCH
+	sz <- dados[i,]$size
+	tserial <- serial_stat[(serial_stat$BENCH == name) & (serial_stat$size == sz),]$mean
+	dados[i,]$speedup <- tserial / dados[i,]$time
+}
+
+# rename GPUs label
+dados[dados$gpus == 0, "gpus"] <- as.character("0 (only CPUs)")
+dados[dados$gpus == 1, "gpus"] <- as.character("1 GPU")
+dados[dados$gpus == 2, "gpus"] <- as.character("2 GPUs")
+dados[dados$gpus == 3, "gpus"] <- as.character("3 GPUs")
+dados[dados$gpus == 4, "gpus"] <- as.character("4 GPUs")
+# rename backends
+dados$backend <- ifelse(dados$backend == "PARALLEL_BACK_KAAPI", "Kaapi", as.character(dados$backend))
+dados$backend <- ifelse(dados$backend == "PARALLEL_BACK_OPENMP", "OpenMP", as.character(dados$backend))
+dados$backend <- ifelse((dados$backend == "PARALLEL_BACK_STARPU") & (dados$thread == 0), "StarPU(GPU)", as.character(dados$backend))
+dados$backend <- ifelse(dados$backend == "PARALLEL_BACK_STARPU", "StarPU(CPU+GPU)", as.character(dados$backend))
+dados$backend <- ifelse(dados$backend == "PARALLEL_BACK_STARPU_OPENMP", "StarPU+OpenMP", as.character(dados$backend))
+dados$backend <- ifelse(dados$backend == "PARALLEL_BACK_STARPU_KAAPI", "StarPU+Kaapi", as.character(dados$backend))
+# rename sizes nbody
+dados$size <- ifelse((dados$size == 65536)  & (dados$BENCH == "nbody"), 1, as.integer(dados$size))
+dados$size <- ifelse((dados$size == 81920)  & (dados$BENCH == "nbody"), 2, as.integer(dados$size))
+dados$size <- ifelse((dados$size == 98304)  & (dados$BENCH == "nbody"), 3, as.integer(dados$size))
+dados$size <- ifelse((dados$size == 114688) & (dados$BENCH == "nbody"), 4, as.integer(dados$size))
+dados$size <- ifelse((dados$size == 131072) & (dados$BENCH == "nbody"), 5, as.integer(dados$size))
+# rename sizes hotspot
+dados$size <- ifelse((dados$size == 12288) & (dados$BENCH == "hotspot"), 1, as.integer(dados$size))
+dados$size <- ifelse((dados$size == 14336) & (dados$BENCH == "hotspot"), 2, as.integer(dados$size))
+dados$size <- ifelse((dados$size == 16384) & (dados$BENCH == "hotspot"), 3, as.integer(dados$size))
+dados$size <- ifelse((dados$size == 18432) & (dados$BENCH == "hotspot"), 4, as.integer(dados$size))
+dados$size <- ifelse((dados$size == 20480) & (dados$BENCH == "hotspot"), 5, as.integer(dados$size))
+# rename sizes cfd
+dados$size <- ifelse((dados$size == 98304) & (dados$BENCH == "cfd"), 1, as.integer(dados$size))
+dados$size <- ifelse((dados$size == 114688) & (dados$BENCH == "cfd"), 2, as.integer(dados$size))
+dados$size <- ifelse((dados$size == 131072) & (dados$BENCH == "cfd"), 3, as.integer(dados$size))
+dados$size <- ifelse((dados$size == 147456) & (dados$BENCH == "cfd"), 4, as.integer(dados$size))
+dados$size <- ifelse((dados$size == 163840) & (dados$BENCH == "cfd"), 5, as.integer(dados$size))
+
+
+dados_stat <- ddply(dados, entry, summarise, 
+                     n=length(speedup), mean=mean(speedup), sd=sd(speedup), se=sd/sqrt(n),
+                     ci=se*qt(.95/2 + .5, n-1))
+# The errorbars overlapped, so use position_dodge to move them horizontally
+pd <- position_dodge(0.1) # move them .05 to the left and right
+
+ggplot(dados_stat, aes(x=size, y=mean, color=factor(backend), shape=factor(backend), linetype=factor(backend)))+
+    geom_errorbar(aes(ymin=mean-ci, ymax=mean+ci), color="black", width=.1, position=pd) +
+    geom_point() +
+    geom_line() +
+    theme_bw() +
+    scale_colour_discrete(name="Runtime\nBackend") +
+    scale_shape_discrete(name="Runtime\nBackend") +
+    scale_linetype_discrete(name="Runtime\nBackend") +
+    theme(axis.text.x = element_text(size=8), axis.text.y= element_text(size=8), legend.position="top") + 
+    xlab("Size") +
+    ylab("Speedup") + 
+    scale_x_continuous(labels=c("", "", "", "", "")) +
+    #scale_y_continuous(limits=c(0,110), breaks=seq(0,100,10)) +
+    facet_grid(BENCH ~ gpus, scales = "free_y")
+#+end_src
+#+caption: Speedup over sequential version by sizes with maximum threads and GPUs.
+#+RESULTS: fig:speedup:size-best
+[[file:figuras/resultados_idcin2/speedup-size-best.pdf]]
+#+LATEX: \FloatBarrier
+**** Speedup - calibragem melhor configuração CPUs + GPUs:
+#+name: fig:speedup:size-calib-starpu
+#+begin_src R :results output graphics :file "figuras/resultados_idcin2/speedup-size-calib-starpu.pdf" :exports results :width 8 :height 6 :session org-R 
+library(ggplot2)
+library(plyr)
+entry <- c("BENCH", "backend", "size", "block_size", "thread", "gpus")
+dados_all <- read.csv("./dados/idcin-2/calib_starpu_size/dissertacao2016-starpu-1474476426.csv", header=TRUE, sep=";")
+serial <- dados_all[grep("^SERIAL$",dados_all$backend),]
+serial_stat <- ddply(serial, entry, summarise,
+                     n=length(time), mean=mean(time), sd=sd(time),
+                     se=sd/sqrt(n), ci=se*qt(.95/2 + .5, n-1))
+
+# calculate speedup
+dados <- dados_all[grep("SERIAL", dados_all$backend, invert=TRUE),] #eliminate SERIAL
+dados$speedup <- 1:nrow(dados)
+for(i in 1:nrow(dados)){
+	name <- dados[i,]$BENCH
+	sz <- dados[i,]$size
+	tserial <- serial_stat[(serial_stat$BENCH == name) & (serial_stat$size == sz),]$mean
+	dados[i,]$speedup <- tserial / dados[i,]$time
+}
+
+# rename GPUs label
+dados[dados$gpus == 0, "gpus"] <- as.character("0 (only CPUs)")
+dados[dados$gpus == 1, "gpus"] <- as.character("1 GPU")
+dados[dados$gpus == 2, "gpus"] <- as.character("2 GPUs")
+dados[dados$gpus == 3, "gpus"] <- as.character("3 GPUs")
+dados[dados$gpus == 4, "gpus"] <- as.character("4 GPUs")
+# rename backends
+dados$backend <- ifelse(dados$backend == "PARALLEL_BACK_KAAPI", "Kaapi", as.character(dados$backend))
+dados$backend <- ifelse(dados$backend == "PARALLEL_BACK_OPENMP", "OpenMP", as.character(dados$backend))
+dados$backend <- ifelse((dados$backend == "PARALLEL_BACK_STARPU") & (dados$thread == 0), "StarPU-GPU", as.character(dados$backend))
+dados$backend <- ifelse(dados$backend == "PARALLEL_BACK_STARPU", "StarPU", as.character(dados$backend))
+# rename sizes nbody
+dados$size <- ifelse((dados$size == 65536)  & (dados$BENCH == "nbody"), "Size 1", as.character(dados$size))
+dados$size <- ifelse((dados$size == 81920)  & (dados$BENCH == "nbody"), "Size 2", as.character(dados$size))
+dados$size <- ifelse((dados$size == 98304)  & (dados$BENCH == "nbody"), "Size 3", as.character(dados$size))
+dados$size <- ifelse((dados$size == 114688) & (dados$BENCH == "nbody"), "Size 4", as.character(dados$size))
+dados$size <- ifelse((dados$size == 131072) & (dados$BENCH == "nbody"), "Size 5", as.character(dados$size))
+# rename sizes hotspot
+dados$size <- ifelse((dados$size == 12288) & (dados$BENCH == "hotspot"), "Size 1", as.character(dados$size))
+dados$size <- ifelse((dados$size == 14336) & (dados$BENCH == "hotspot"), "Size 2", as.character(dados$size))
+dados$size <- ifelse((dados$size == 16384) & (dados$BENCH == "hotspot"), "Size 3", as.character(dados$size))
+dados$size <- ifelse((dados$size == 18432) & (dados$BENCH == "hotspot"), "Size 4", as.character(dados$size))
+dados$size <- ifelse((dados$size == 20480) & (dados$BENCH == "hotspot"), "Size 5", as.character(dados$size))
+
+dados_stat <- ddply(dados, entry, summarise, 
+                     n=length(speedup), mean=mean(speedup), sd=sd(speedup), se=sd/sqrt(n),
+                     ci=se*qt(.95/2 + .5, n-1))
+# The errorbars overlapped, so use position_dodge to move them horizontally
+pd <- position_dodge(0.1) # move them .05 to the left and right
+
+ggplot(dados_stat, aes(x=thread, y=mean, color=factor(size), shape=factor(size), linetype=factor(size)))+
+    #geom_errorbar(aes(ymin=mean-ci, ymax=mean+ci), color="black", width=.1, position=pd) +
+    geom_point() +
+    geom_line() +
+    theme_bw() +
+    scale_colour_discrete(name="Runtime\nBackend") +
+    scale_shape_discrete(name="Runtime\nBackend") +
+    scale_linetype_discrete(name="Runtime\nBackend") +
+    theme(axis.text.x = element_text(size=8), axis.text.y= element_text(size=8), legend.position="top") + 
+    xlab("Threads") +
+    ylab("Speedup") + 
+    scale_x_continuous(limits=c(21,28), breaks=seq(22,28,1)) +
+    #scale_y_continuous(limits=c(0,110), breaks=seq(0,100,10)) +
+    facet_grid(BENCH ~ gpus, scales = "free_y")
+#+end_src
+#+caption: Speedup over sequential version by sizes calibrating CPUs + GPUs.
+#+RESULTS: fig:speedup:size-calib-starpu
+[[file:figuras/resultados_idcin2/speedup-size-calib-starpu.pdf]]
+#+LATEX: \FloatBarrier
+**** Time - calibragem melhor configuração CPUs + GPUs:
+#+name: fig:time:size-calib-starpu
+#+begin_src R :results output graphics :file "figuras/resultados_idcin2/time-size-calib-starpu.pdf" :exports results :width 8 :height 6 :session org-R 
+library(ggplot2)
+library(plyr)
+entry <- c("BENCH", "backend", "size", "block_size", "thread", "gpus")
+dados_all <- read.csv("./dados/idcin-2/calib_starpu_size/dissertacao2016-starpu-1474476426.csv", header=TRUE, sep=";")
+
+# filters
+dados <- dados_all[grep("SERIAL", dados_all$backend, invert=TRUE),] #eliminate SERIAL
+
+# rename GPUs label
+dados[dados$gpus == 0, "gpus"] <- as.character("0 (only CPUs)")
+dados[dados$gpus == 1, "gpus"] <- as.character("1 GPU")
+dados[dados$gpus == 2, "gpus"] <- as.character("2 GPUs")
+dados[dados$gpus == 3, "gpus"] <- as.character("3 GPUs")
+dados[dados$gpus == 4, "gpus"] <- as.character("4 GPUs")
+# rename backends
+dados$backend <- ifelse(dados$backend == "PARALLEL_BACK_KAAPI", "Kaapi", as.character(dados$backend))
+dados$backend <- ifelse(dados$backend == "PARALLEL_BACK_OPENMP", "OpenMP", as.character(dados$backend))
+dados$backend <- ifelse((dados$backend == "PARALLEL_BACK_STARPU") & (dados$thread == 0), "StarPU-GPU", as.character(dados$backend))
+dados$backend <- ifelse(dados$backend == "PARALLEL_BACK_STARPU", "StarPU", as.character(dados$backend))
+# rename sizes nbody
+dados$size <- ifelse((dados$size == 65536)  & (dados$BENCH == "nbody"), "Size 1", as.character(dados$size))
+dados$size <- ifelse((dados$size == 81920)  & (dados$BENCH == "nbody"), "Size 2", as.character(dados$size))
+dados$size <- ifelse((dados$size == 98304)  & (dados$BENCH == "nbody"), "Size 3", as.character(dados$size))
+dados$size <- ifelse((dados$size == 114688) & (dados$BENCH == "nbody"), "Size 4", as.character(dados$size))
+dados$size <- ifelse((dados$size == 131072) & (dados$BENCH == "nbody"), "Size 5", as.character(dados$size))
+# rename sizes hotspot
+dados$size <- ifelse((dados$size == 12288) & (dados$BENCH == "hotspot"), "Size 1", as.character(dados$size))
+dados$size <- ifelse((dados$size == 14336) & (dados$BENCH == "hotspot"), "Size 2", as.character(dados$size))
+dados$size <- ifelse((dados$size == 16384) & (dados$BENCH == "hotspot"), "Size 3", as.character(dados$size))
+dados$size <- ifelse((dados$size == 18432) & (dados$BENCH == "hotspot"), "Size 4", as.character(dados$size))
+dados$size <- ifelse((dados$size == 20480) & (dados$BENCH == "hotspot"), "Size 5", as.character(dados$size))
+
+dados_stat <- ddply(dados, entry, summarise, 
+                    n=length(time), mean=mean(time), sd=sd(time),
+                    se=sd/sqrt(n), ci=se*qt(.95/2 + .5, n-1))
+# The errorbars overlapped, so use position_dodge to move them horizontally
+pd <- position_dodge(0.1) # move them .05 to the left and right
+
+ggplot(dados_stat, aes(x=thread, y=mean, color=factor(size), shape=factor(size), linetype=factor(size)))+
+    #geom_errorbar(aes(ymin=mean-ci, ymax=mean+ci), color="black", width=.1, position=pd) +
+    geom_point() +
+    geom_line() +
+    theme_bw() +
+    scale_colour_discrete(name="Runtime\nBackend") +
+    scale_shape_discrete(name="Runtime\nBackend") +
+    scale_linetype_discrete(name="Runtime\nBackend") +
+    theme(axis.text.x = element_text(size=8), axis.text.y= element_text(size=8), legend.position="top") + 
+    xlab("Threads") +
+    ylab("Time (s)") + 
+    scale_x_continuous(limits=c(21,28), breaks=seq(22,28,1)) +
+    #scale_y_continuous(limits=c(0,110), breaks=seq(0,100,10)) +
+    facet_grid(BENCH ~ gpus, scales = "free_y")
+#+end_src
+#+caption: Time by sizes calibrating CPUs + GPUs.
+#+RESULTS: fig:time:size-calib-starpu
+[[file:figuras/resultados_idcin2/time-size-calib-starpu.pdf]]
+#+LATEX: \FloatBarrier
+**** Speedup - calibragem escalonador CFD, Hotspot e NBody com dmda, dm, dmdar, dmdas:
+realizados testes para identificar se modificando o escalonador da
+StarPU resultava em mudança no comportamento das execuções. No geral, o
+escalonamento DMDA é o que obteve os melhores desempenhos.
+#+name: fig:speedup:sched-starpu
+#+begin_src R :results output graphics :file "figuras/resultados_idcin2/speedup-sched-starpu.pdf" :exports results :width 8 :height 6 :session org-R 
+library(ggplot2)
+library(plyr)
+entry <- c("BENCH", "backend", "size", "block_size", "thread", "gpus")
+dados_all <- read.csv("./dados/idcin-2/starpu_sched/data_R_starpu_sched.csv", header=TRUE, sep=";")
+serial <- dados_all[grep("^SERIAL$",dados_all$backend),]
+serial_stat <- ddply(serial, entry, summarise,
+                     n=length(time), mean=mean(time), sd=sd(time),
+                     se=sd/sqrt(n), ci=se*qt(.95/2 + .5, n-1))
+
+# calculate speedup
+dados <- dados_all[grep("SERIAL", dados_all$backend, invert=TRUE),] #eliminate SERIAL
+dados <- dados[((dados$BENCH == "hotspot") & (dados$size == 16384) & (dados$block_size == 1024)) | 
+	       ((dados$BENCH == "nbody") & (dados$size == 98304) & (dados$block_size == 2048)) |
+	       ((dados$BENCH == "cfd") & (dados$size == 131072) & (dados$block_size == 2048)),]
+dados <- dados[(dados$thread != 2) & (dados$thread != 4) &
+					(dados$thread != 6) & (dados$thread != 8) & 
+					(dados$thread != 10) & (dados$thread != 12) & 
+					(dados$thread != 14) & (dados$thread != 16) &
+					(dados$thread != 25) & (dados$thread != 27),]
+dados$speedup <- 1:nrow(dados)
+for(i in 1:nrow(dados)){
+	name <- dados[i,]$BENCH
+	sz <- dados[i,]$size
+	tserial <- serial_stat[(serial_stat$BENCH == name) & (serial_stat$size == sz),]$mean
+	dados[i,]$speedup <- tserial / dados[i,]$time
+}
+
+# rename GPUs label
+dados[dados$gpus == 0, "gpus"] <- as.character("0 (only CPUs)")
+dados[dados$gpus == 1, "gpus"] <- as.character("1 GPU")
+dados[dados$gpus == 2, "gpus"] <- as.character("2 GPUs")
+dados[dados$gpus == 3, "gpus"] <- as.character("3 GPUs")
+dados[dados$gpus == 4, "gpus"] <- as.character("4 GPUs")
+# rename backends
+dados$backend <- ifelse(dados$backend == "PARALLEL_BACK_STARPU_dmda", "dmda", as.character(dados$backend))
+dados$backend <- ifelse(dados$backend == "PARALLEL_BACK_STARPU_dm", "dm", as.character(dados$backend))
+dados$backend <- ifelse(dados$backend == "PARALLEL_BACK_STARPU_dmdar", "dmdar", as.character(dados$backend))
+dados$backend <- ifelse(dados$backend == "PARALLEL_BACK_STARPU_dmdas", "dmdas", as.character(dados$backend))
+# rename thread 0
+dados[dados$thread == 0, "thread"] <- as.integer(16)
+
+dados_stat <- ddply(dados, entry, summarise, 
+                     n=length(speedup), mean=mean(speedup), sd=sd(speedup), se=sd/sqrt(n),
+                     ci=se*qt(.95/2 + .5, n-1))
+
+# The errorbars overlapped, so use position_dodge to move them horizontally
+pd <- position_dodge(0.1) # move them .05 to the left and right
+
+ggplot(dados_stat, aes(x=thread, y=mean, color=factor(backend), shape=factor(backend), linetype=factor(backend)))+
+    geom_errorbar(aes(ymin=mean-ci, ymax=mean+ci), color="black", width=.1, position=pd) +
+    geom_point() +
+    geom_line() +
+    theme_bw() +
+    scale_colour_discrete(name="Runtime\nBackend") +
+    scale_shape_discrete(name="Runtime\nBackend") +
+    scale_linetype_discrete(name="Runtime\nBackend") +
+    theme(axis.text.x = element_text(size=8), axis.text.y= element_text(size=8), legend.position="top") + 
+    xlab("Threads") +
+    ylab("Speedup") + 
+    scale_x_continuous(limits=c(15,28), breaks=c(16,18,20,22,24,26,28), labels=c("0", "18", "20", "22", "24", "26", "28")) +
+    #scale_y_continuous(limits=c(0,110), breaks=seq(0,100,10)) +
+    facet_grid(BENCH ~ gpus, scales = "free_y")
+#+end_src
+#+caption: Speedup over sequential version by sizes calibrating schedules.
+#+RESULTS: fig:speedup:sched-starpu
+[[file:figuras/resultados_idcin2/speedup-sched-starpu.pdf]]
+#+LATEX: \FloatBarrier
+**** Speedup comparing two block sizes with StarPU, StarPU+OpenMP e StarPU+Kaapi:
+teste realizado para avaliar o desempenho com um bloco maior (dobro) que o
+utilizado nos testes anteriores. Espera-se que o desempenho dos
+back-ends StarPU+OMP e StarPU+Kaapi alcancem resultados melhores com o
+bloco maior, pois haverá mais paralelismo disponível para as tarefas.
+***** CFD: block size 2048 and 4096 (size: 131072);
+***** Hostpot: block size 1024 and 2048 (size: 16384);
+***** NBody: block size 2048 and 4096 (size: 98304);
+#+name: fig:speedup:starpu_omp:block-size
+#+begin_src R :results output graphics :file "figuras/resultados_idcin2/speedup-starpu_omp-block-size.pdf" :exports results :width 8 :height 6 :session org-R 
+library(ggplot2)
+library(plyr)
+entry <- c("BENCH", "backend", "size", "block_size", "thread", "gpus")
+dados_all <- read.csv("./dados/idcin-2/data_R.csv", header=TRUE, sep=";")
+serial <- dados_all[grep("^SERIAL$",dados_all$backend),]
+serial_stat <- ddply(serial, entry, summarise,
+                     n=length(time), mean=mean(time), sd=sd(time),
+                     se=sd/sqrt(n), ci=se*qt(.95/2 + .5, n-1))
+
+# calculate speedup
+dados <- dados_all[grep("SERIAL", dados_all$backend, invert=TRUE),] #eliminate SERIAL
+dados <- dados[( ((dados$BENCH == "hotspot") & (dados$size == 16384)) | 
+                 ((dados$BENCH == "nbody")   & (dados$size == 98304)) |
+                 ((dados$BENCH == "cfd")     & (dados$size == 131072)) ) & 
+                 ((dados$backend == "PARALLEL_BACK_STARPU") | (dados$backend == "PARALLEL_BACK_STARPU_OPENMP") | (dados$backend == "PARALLEL_BACK_STARPU_KAAPI")),]
+
+dados <- dados[(dados$thread != 25) & (dados$thread != 27),]
+dados$speedup <- 1:nrow(dados)
+for(i in 1:nrow(dados)){
+	name <- dados[i,]$BENCH
+	sz <- dados[i,]$size
+	tserial <- serial_stat[(serial_stat$BENCH == name) & (serial_stat$size == sz),]$mean
+	dados[i,]$speedup <- tserial / dados[i,]$time
+}
+
+# rename GPUs label
+dados[dados$gpus == 0, "gpus"] <- as.character("0 (only CPUs)")
+dados[dados$gpus == 1, "gpus"] <- as.character("1 GPU")
+dados[dados$gpus == 2, "gpus"] <- as.character("2 GPUs")
+dados[dados$gpus == 3, "gpus"] <- as.character("3 GPUs")
+dados[dados$gpus == 4, "gpus"] <- as.character("4 GPUs")
+# rename backends
+dados$backend <- ifelse(dados$backend == "PARALLEL_BACK_STARPU" & 
+                        ((dados$BENCH == "hotspot" & dados$block_size == 1024) |
+                         (dados$BENCH == "nbody"   & dados$block_size == 2048) |
+                         (dados$BENCH == "cfd"     & dados$block_size == 2048)), "StarPU-0-small", as.character(dados$backend))
+dados$backend <- ifelse(dados$backend == "PARALLEL_BACK_STARPU" & 
+                        ((dados$BENCH == "hotspot" & dados$block_size == 2048) |
+                         (dados$BENCH == "nbody"   & dados$block_size == 4096) |
+                         (dados$BENCH == "cfd"     & dados$block_size == 4096)), "StarPU-1-big", as.character(dados$backend))
+dados$backend <- ifelse(dados$backend == "PARALLEL_BACK_STARPU" & 
+                        dados$BENCH == "cfd" & dados$block_size == 8192, "StarPU-2-superBig", as.character(dados$backend))
+dados$backend <- ifelse(dados$backend == "PARALLEL_BACK_STARPU_OPENMP" &
+                        ((dados$BENCH == "hotspot" & dados$block_size == 1024) |
+                         (dados$BENCH == "nbody"   & dados$block_size == 2048) |
+                         (dados$BENCH == "cfd"     & dados$block_size == 2048)), "StarPU+OMP-0-small", as.character(dados$backend))
+dados$backend <- ifelse(dados$backend == "PARALLEL_BACK_STARPU_OPENMP" & 
+                        ((dados$BENCH == "hotspot" & dados$block_size == 2048) |
+                         (dados$BENCH == "nbody"   & dados$block_size == 4096) |
+                         (dados$BENCH == "cfd"     & dados$block_size == 4096)), "StarPU+OMP-1-big", as.character(dados$backend))
+dados$backend <- ifelse(dados$backend == "PARALLEL_BACK_STARPU_KAAPI" &
+                        ((dados$BENCH == "hotspot" & dados$block_size == 1024) |
+                         (dados$BENCH == "nbody"   & dados$block_size == 2048) |
+                         (dados$BENCH == "cfd"     & dados$block_size == 2048)), "StarPU+Kaapi-0-small", as.character(dados$backend))
+dados$backend <- ifelse(dados$backend == "PARALLEL_BACK_STARPU_KAAPI" & 
+                        ((dados$BENCH == "hotspot" & dados$block_size == 2048) |
+                         (dados$BENCH == "nbody"   & dados$block_size == 4096) |
+                         (dados$BENCH == "cfd"     & dados$block_size == 4096)), "StarPU+Kaapi-1-big", as.character(dados$backend))
+dados$backend <- ifelse(dados$backend == "PARALLEL_BACK_STARPU_OPENMP" & 
+                        dados$BENCH == "cfd" & dados$block_size == 8192, "StarPU+OMP-2-superBig", as.character(dados$backend))
+
+dados_stat <- ddply(dados, entry, summarise, 
+                     n=length(speedup), mean=mean(speedup), sd=sd(speedup), se=sd/sqrt(n),
+                     ci=se*qt(.95/2 + .5, n-1))
+
+# The errorbars overlapped, so use position_dodge to move them horizontally
+pd <- position_dodge(0.1) # move them .05 to the left and right
+
+ggplot(dados_stat, aes(x=thread, y=mean, color=factor(backend), shape=factor(backend), linetype=factor(backend)))+
+    #geom_errorbar(aes(ymin=mean-ci, ymax=mean+ci), color="black", width=.1, position=pd) +
+    geom_point() +
+    geom_line() +
+    theme_bw() +
+    scale_colour_discrete(name="Runtime\nBackend") +
+    scale_shape_discrete(name="Runtime\nBackend") +
+    scale_linetype_discrete(name="Runtime\nBackend") +
+    theme(axis.text.x = element_text(size=8), axis.text.y= element_text(size=8), legend.position="top") + 
+    xlab("Threads") +
+    ylab("Speedup") + 
+    scale_x_continuous(limits=c(-1,28), breaks=seq(0,28,4)) +
+    #scale_y_continuous(limits=c(0,110), breaks=seq(0,100,10)) +
+    facet_grid(BENCH ~ gpus, scales = "free_y")
+#+end_src
+#+caption: Speedup over sequential version using StarPU/StarPU+OMP/StarPU+Kaapi with different block sizes.
+#+RESULTS: fig:speedup:starpu_omp:block-size
+[[file:figuras/resultados_idcin2/speedup-starpu_omp-block-size.pdf]]
+#+LATEX: \FloatBarrier
+**** Time sequencial:
+tempo das execuções seriais variando o tamanho da entrada:
+#+begin_src
+Sizes: 
+  CFD: 98304, 114688, 131072, 147456, 163840; 
+  Hostspot: 12288N, 14336N, 16384N, 18432N, 20480N; 
+  NBody: 65536, 81920, 98304, 114688, 131072;
+#+end_src
+#+name: fig:time:serial
+#+begin_src R :results output graphics :file "figuras/resultados_idcin2/time-serial.pdf" :exports results :width 8 :height 6 :session org-R 
+library(ggplot2)
+library(plyr)
+entry <- c("BENCH", "backend", "size", "block_size", "thread", "gpus")
+dados_all <- read.csv("./dados/idcin-2/data_R.csv", header=TRUE, sep=";")
+
+# filters
+dados <- dados_all[grep("SERIAL", dados_all$backend, invert=FALSE),] #keep just serial
+dados <- dados[(dados$backend == "SERIAL"),]
+
+# rename GPU and Backend label
+dados[dados$gpus    == 0, "gpus"] <- as.character("Serial Executions")
+dados$backend <- ifelse(dados$backend == "SERIAL", "Serial", as.character(dados$backend))
+# rename sizes nbody
+dados$size <- ifelse((dados$size == 65536)  & (dados$BENCH == "nbody"), "Size 1", as.character(dados$size))
+dados$size <- ifelse((dados$size == 81920)  & (dados$BENCH == "nbody"), "Size 2", as.character(dados$size))
+dados$size <- ifelse((dados$size == 98304)  & (dados$BENCH == "nbody"), "Size 3", as.character(dados$size))
+dados$size <- ifelse((dados$size == 114688) & (dados$BENCH == "nbody"), "Size 4", as.character(dados$size))
+dados$size <- ifelse((dados$size == 131072) & (dados$BENCH == "nbody"), "Size 5", as.character(dados$size))
+# rename sizes hotspot
+dados$size <- ifelse((dados$size == 12288) & (dados$BENCH == "hotspot"), "Size 1", as.character(dados$size))
+dados$size <- ifelse((dados$size == 14336) & (dados$BENCH == "hotspot"), "Size 2", as.character(dados$size))
+dados$size <- ifelse((dados$size == 16384) & (dados$BENCH == "hotspot"), "Size 3", as.character(dados$size))
+dados$size <- ifelse((dados$size == 18432) & (dados$BENCH == "hotspot"), "Size 4", as.character(dados$size))
+dados$size <- ifelse((dados$size == 20480) & (dados$BENCH == "hotspot"), "Size 5", as.character(dados$size))
+# rename sizes cfd
+dados$size <- ifelse((dados$size == 98304) &  (dados$BENCH == "cfd"), "Size 1", as.character(dados$size))
+dados$size <- ifelse((dados$size == 114688) & (dados$BENCH == "cfd"), "Size 2", as.character(dados$size))
+dados$size <- ifelse((dados$size == 131072) & (dados$BENCH == "cfd"), "Size 3", as.character(dados$size))
+dados$size <- ifelse((dados$size == 147456) & (dados$BENCH == "cfd"), "Size 4", as.character(dados$size))
+dados$size <- ifelse((dados$size == 163840) & (dados$BENCH == "cfd"), "Size 5", as.character(dados$size))
+
+dados_stat <- ddply(dados, entry, summarise, 
+                    n=length(time), mean=mean(time), sd=sd(time),
+                    se=sd/sqrt(n), ci=se*qt(.95/2 + .5, n-1))
+# The errorbars overlapped, so use position_dodge to move them horizontally
+pd <- position_dodge(0.1) # move them .05 to the left and right
+
+ggplot(dados_stat, aes(x=size, y=mean, color=factor(backend), shape=factor(backend), linetype=factor(backend), group=1))+
+    geom_errorbar(aes(ymin=mean-ci, ymax=mean+ci), color="black", width=.1, position=pd) +
+    geom_point() +
+    geom_line() +
+    theme_bw() +
+    scale_colour_discrete(name="Runtime\nBackend") +
+    scale_shape_discrete(name="Runtime\nBackend") +
+    scale_linetype_discrete(name="Runtime\nBackend") +
+    theme(axis.text.x = element_text(size=8), axis.text.y= element_text(size=8), legend.position="top") + 
+    xlab("Sizes") +
+    ylab("Time (s)") + 
+    #scale_x_continuous(labels=c("", "", "", "", "")) +
+    #scale_y_continuous(limits=c(0,110), breaks=seq(0,100,10)) +
+    facet_grid(BENCH~gpus, scales = "free_y")
+#+end_src
+#+caption: Time by sizes.
+#+RESULTS: fig:time:serial
+[[file:figuras/resultados_idcin2/time-serial.pdf]]
+#+LATEX: \FloatBarrier
+*** Rastros
+**** Hotspot com GPUs mais máximo de threads:
+***** Script                                                   :noexport:
+#+begin_src R :session org-R 
+library(ggplot2)
+library(plyr)
+library(data.table)
+library(RColorBrewer) 
+
+# Defining non-computation states:
+#def_states<-c("Initializing","Deinitializing","Overhead","Nothing","Sleeping","Freeing","Allocating","WritingBack","FetchingInput","PushingOutput","Callback","Progressing","Unpartitioning","AllocatingReuse","Reclaiming","DriverCopy","DriverCopyAsync","Scheduling","Executing")
+def_states<-c("Initializing","Deinitializing","Overhead","Nothing","Freeing","Allocating","WritingBack","PushingOutput","Callback","Progressing","Unpartitioning","AllocatingReuse","Reclaiming","Scheduling")
+
+# Function for reading .csv file
+read_df <- function(file,range1,range2) {
+	df<-read.csv(file, header=FALSE, strip.white=TRUE)
+	names(df) <- c("Nature","ResourceId","Type","Start","End","Duration", "Depth", "Value")
+	df = df[!(names(df) %in% c("Nature","Type", "Depth"))]
+	df$Origin<-as.factor(as.character(file))
+
+	# Changing names if needed:
+	df$Value <- as.character(df$Value)
+	df$Value <- ifelse(df$Value == "F", "Freeing", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "A", "Allocating", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "W", "WritingBack", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "No", "Nothing", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "I", "Initializing", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "D", "Deinitializing", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "Fi", "FetchingInput", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "Po", "PushingOutput", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "C", "Callback", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "B", "Overhead", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "Sc", "Scheduling", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "E", "Executing", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "Sl", "Sleeping", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "P", "Progressing", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "U", "Unpartitioning", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "Ar", "AllocatingReuse", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "R", "Reclaiming", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "Co", "DriverCopy", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "CoA", "DriverCopyAsync", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "9funcForce", "Computing (force)", as.character(df$Value))
+
+	# Small cleanup
+	df$Start<-round(df$Start,digit=1)
+	df$End<-round(df$End,digit=1)
+	df$ResourceId<-as.factor(df$ResourceId)
+	df$Value<-as.factor(df$Value)
+
+	# Start from zero
+	m <- min(df$Start)
+	df$Start <- df$Start - m
+	df$End <- df$Start+df$Duration
+
+	# Return data frame
+	df
+}
+
+input_traces <- c("./dados/idcin-2/rastros/hotspot_1GPU_26CPU.trace.csv",
+                  "./dados/idcin-2/rastros/hotspot_1GPU_27CPU.trace.csv",
+                  "./dados/idcin-2/rastros/hotspot_2GPU_26CPU.trace.csv",
+                  "./dados/idcin-2/rastros/hotspot_2GPU_25CPU.trace.csv",
+                  "./dados/idcin-2/rastros/hotspot_3GPU_25CPU.trace.csv",
+                  "./dados/idcin-2/rastros/hotspot_3GPU_24CPU.trace.csv",
+                  "./dados/idcin-2/rastros/hotspot_4GPU_24CPU.trace.csv",
+                  "./dados/idcin-2/rastros/hotspot_4GPU_23CPU.trace.csv")
+
+idx <- 1
+for (i in 1:(length(input_traces)/2)) {
+	df<-data.frame()
+	
+	dfs<-read_df(input_traces[idx])
+	df<-rbindlist(list(df,dfs))
+  
+	dfs<-read_df(input_traces[idx+1])
+	df<-rbindlist(list(df,dfs))
+
+	# rename origin
+	#df[df$Origin == 'paje_native_hybrid.csv',"Origin"] <- "Native"
+	df[grep("1GPU_27CPU", df$Origin), "Origin"] <- "1 GPU + 27 cores"
+	df[grep("1GPU_26CPU", df$Origin), "Origin"] <- "1 GPU + 26 cores"
+	df[grep("2GPU_26CPU", df$Origin), "Origin"] <- "2 GPUs + 26 cores"
+	df[grep("2GPU_25CPU", df$Origin), "Origin"] <- "2 GPUs + 25 cores"
+	df[grep("3GPU_25CPU", df$Origin), "Origin"] <- "3 GPUs + 25 cores"
+	df[grep("3GPU_24CPU", df$Origin), "Origin"] <- "3 GPUs + 24 cores"
+	df[grep("4GPU_24CPU", df$Origin), "Origin"] <- "4 GPUs + 24 cores"
+	df[grep("4GPU_23CPU", df$Origin), "Origin"] <- "4 GPUs + 23 cores"
+
+	# Color palettes
+	colourCount = length(unique(df$Value))
+	getPalette = colorRampPalette(brewer.pal(9, "Set1"))
+
+	# Order of Value so we can have good colors
+	ker_states<-as.character(unique(df[!(df$Value %in% def_states),Value]))
+	ordered_states<-append(sort(ker_states), def_states)
+	df$Value <- factor(df$Value, levels=ordered_states)
+
+	# Order of ResourceId so we can have y-axis
+	df$ResourceId <- factor(df$ResourceId, levels=sort(as.character(unique(df$ResourceId))))
+
+	# Select only computation kernels
+	df1 <- df[!(df$Value %in% def_states),]
+
+	# Start from zero
+	m <- min(df1$Start)
+	df1$Start <- df1$Start - m
+	df1$End <- df1$Start+df1$Duration
+
+	# Plot
+	plot <- ggplot(df1,aes(x=Start,xend=End, y=factor(ResourceId), yend=factor(ResourceId),color=Value)) + 
+		theme_bw() + 
+              #scale_color_manual(name="State",values=getPalette(colourCount)) + 
+              scale_color_manual(values=c("#FF0000", "#00FF00", "#0000FF", "#FF1493", 
+                                          "#FFFF00", "#FFA500", "#2F4F4F", "#006400", 
+                                          "#000000", "#1E90FF")) +
+              geom_segment(size=4) + 
+              ylab("Resource") + 
+              xlab("Time [ms]") + 
+		facet_wrap(~Origin,ncol=1,scale="free_y")
+	
+	name <- paste("figuras/rastros_idcin2/hotspot", idx-(i-1), "GPU.pdf", sep="_")
+	#print(name)
+	
+	ggsave(filename=name, plot=plot, height=10, width=9)
+
+	idx <- idx+2
+}
+#+end_src
+***** Traços:
+traços para identificar a razão da execução com uma thread a menos que
+o máximo possível resultar no melhor desempenho.
+#+name: fig:rastro:hotspot_1GPU_CPU
+#+caption: Trace from Hotspot benchmark with 1 GPU + 26/27 threads.
+#+RESULTS: fig:rastro:hotspot_1GPU_CPU
+[[file:figuras/rastros_idcin2/hotspot_1_GPU.pdf]]
+
+#+name: fig:rastro:hotspot_2GPU_CPU
+#+caption: Trace from Hotspot benchmark with 2 GPUs + 25/26 threads.
+#+RESULTS: fig:rastro:hotspot_2GPU_CPU
+[[file:figuras/rastros_idcin2/hotspot_2_GPU.pdf]]
+
+#+name: fig:rastro:hotspot_3GPU_CPU
+#+caption: Trace from Hotspot benchmark with 3 GPUs + 24/25 threads.
+#+RESULTS: fig:rastro:hotspot_3GPU_CPU
+[[file:figuras/rastros_idcin2/hotspot_3_GPU.pdf]]
+
+#+name: fig:rastro:hotspot_4GPU_CPU
+#+caption: Trace from Hotspot benchmark with 4 GPUs + 23/24 threads.
+#+RESULTS: fig:rastro:hotspot_4GPU_CPU
+[[file:figuras/rastros_idcin2/hotspot_4_GPU.pdf]]
+
+#+LATEX: \FloatBarrier
+**** NBody com 1 GPUs mais 16 a 26 threads:
+***** Script                                                   :noexport:
+#+begin_src R :session org-R 
+library(ggplot2)
+library(plyr)
+library(data.table)
+library(RColorBrewer) 
+
+# Defining non-computation states:
+#def_states<-c("Initializing","Deinitializing","Overhead","Nothing","Sleeping","Freeing","Allocating","WritingBack","FetchingInput","PushingOutput","Callback","Progressing","Unpartitioning","AllocatingReuse","Reclaiming","DriverCopy","DriverCopyAsync","Scheduling","Executing")
+def_states<-c("Initializing","Deinitializing","Overhead","Nothing","Freeing","Allocating","WritingBack","PushingOutput","Callback","Progressing","Unpartitioning","Reclaiming","Scheduling")
+
+# Function for reading .csv file
+read_df <- function(file,range1,range2) {
+	df<-read.csv(file, header=FALSE, strip.white=TRUE)
+	names(df) <- c("Nature","ResourceId","Type","Start","End","Duration", "Depth", "Value")
+	df = df[!(names(df) %in% c("Nature","Type", "Depth"))]
+	df$Origin<-as.factor(as.character(file))
+
+	# Changing names if needed:
+	df$Value <- as.character(df$Value)
+	df$Value <- ifelse(df$Value == "F", "Freeing", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "A", "Allocating", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "W", "WritingBack", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "No", "Nothing", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "I", "Initializing", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "D", "Deinitializing", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "Fi", "FetchingInput", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "Po", "PushingOutput", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "C", "Callback", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "B", "Overhead", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "Sc", "Scheduling", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "E", "Executing", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "Sl", "Sleeping", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "P", "Progressing", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "U", "Unpartitioning", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "Ar", "AllocatingReuse", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "R", "Reclaiming", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "Co", "DriverCopy", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "CoA", "DriverCopyAsync", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "9funcNBody", "0-NBody", as.character(df$Value))
+
+	# Small cleanup
+	df$Start<-round(df$Start,digit=1)
+	df$End<-round(df$End,digit=1)
+	df$ResourceId<-as.factor(df$ResourceId)
+	df$Value<-as.factor(df$Value)
+
+	# Start from zero
+	m <- min(df$Start)
+	df$Start <- df$Start - m
+	df$End <- df$Start+df$Duration
+
+	# Return data frame
+	df
+}
+
+input_traces <- c("./dados/idcin-2/rastros/nbody_1GPU_16CPU.trace.csv",
+                  "./dados/idcin-2/rastros/nbody_1GPU_18CPU.trace.csv",
+                  "./dados/idcin-2/rastros/nbody_1GPU_20CPU.trace.csv",
+                  "./dados/idcin-2/rastros/nbody_1GPU_22CPU.trace.csv",
+                  "./dados/idcin-2/rastros/nbody_1GPU_24CPU.trace.csv",
+                  "./dados/idcin-2/rastros/nbody_1GPU_26CPU.trace.csv")
+
+idx <- 1
+for (i in 2:(length(input_traces))) {
+	df<-data.frame()
+	
+	dfs<-read_df(input_traces[idx])
+	df<-rbindlist(list(df,dfs))
+  
+	dfs<-read_df(input_traces[i])
+	df<-rbindlist(list(df,dfs))
+
+	# rename origin
+	#df[df$Origin == 'paje_native_hybrid.csv',"Origin"] <- "Native"
+	df[grep("1GPU_16CPU", df$Origin), "Origin"] <- "1 GPU + 16 threads"
+	df[grep("1GPU_18CPU", df$Origin), "Origin"] <- "1 GPU + 18 threads"
+	df[grep("1GPU_20CPU", df$Origin), "Origin"] <- "1 GPU + 20 threads"
+	df[grep("1GPU_22CPU", df$Origin), "Origin"] <- "1 GPU + 22 threads"
+	df[grep("1GPU_24CPU", df$Origin), "Origin"] <- "1 GPU + 24 threads"
+	df[grep("1GPU_26CPU", df$Origin), "Origin"] <- "1 GPU + 26 threads"
+
+	# Color palettes
+	colourCount = length(unique(df$Value))
+	getPalette = colorRampPalette(brewer.pal(9, "Set1"))
+
+	# Order of Value so we can have good colors
+	ker_states<-as.character(unique(df[!(df$Value %in% def_states),Value]))
+	ordered_states<-append(sort(ker_states), def_states)
+	df$Value <- factor(df$Value, levels=ordered_states)
+
+	# Order of ResourceId so we can have y-axis
+	df$ResourceId <- factor(df$ResourceId, levels=sort(as.character(unique(df$ResourceId))))
+
+	# Select only computation kernels
+	df1 <- df[!(df$Value %in% def_states),]
+
+	# Start from zero
+	m <- min(df1$Start)
+	df1$Start <- df1$Start - m
+	df1$End <- df1$Start+df1$Duration
+
+	# Plot
+	plot <- ggplot(df1,aes(x=Start,xend=End, y=factor(ResourceId), yend=factor(ResourceId),color=Value)) + 
+		theme_bw() + 
+              #scale_color_manual(name="State",values=getPalette(colourCount)) + 
+		scale_color_manual(name="Estados", values=c("#FF0000", "#4B0082", "#00FF00", "#0000FF", 
+                                                          "#FF1493", "#FFFF00", "#FFA500", "#2F4F4F", 
+							    "#006400", "#000000", "#1E90FF")) +
+		geom_segment(size=4) + 
+		ylab("Recurso") + 
+		xlab("Tempo (ms)") + 
+		#scale_x_continuous(breaks=seq(0,10000,1500)) +
+		facet_wrap(~Origin,ncol=1,scale="free_y")
+	
+	name <- paste("figuras/rastros_idcin2/nbody_1GPU_16", (i*2+14), "CPU.pdf", sep="_")
+	print(name)
+	
+	ggsave(filename=name, plot=plot, height=10, width=9)
+}
+#+end_src
+***** Traços:
+indicam que o motivo da estabilização dos resultados a partir de 16
+threads é que o escalonador opta por não utilizá-las, visto que elas
+ficam ociosas. Desta forma, as tarefas passam a ser processadas apenas
+pelas GPUs.
+#+name: fig:rastro:nbody_1GPU_16_18CPU
+#+caption: Trace from NBody benchmark with 1 GPU + 16/18 threads.
+#+RESULTS: fig:rastro:nbody_1GPU_16_18CPU
+[[file:figuras/rastros_idcin2/nbody_1GPU_16_18_CPU.pdf]]
+
+#+name: fig:rastro:nbody_1GPU_16_20CPU
+#+caption: Trace from NBody benchmark with 1 GPU + 16/20 threads.
+#+RESULTS: fig:rastro:nbody_1GPU_16_20CPU
+[[file:figuras/rastros_idcin2/nbody_1GPU_16_20_CPU.pdf]]
+
+#+name: fig:rastro:nbody_1GPU_16_22CPU
+#+caption: Trace from NBody benchmark with 1 GPU + 16/22 threads.
+#+RESULTS: fig:rastro:nbody_1GPU_16_22CPU
+[[file:figuras/rastros_idcin2/nbody_1GPU_16_22_CPU.pdf]]
+
+#+name: fig:rastro:nbody_1GPU_16_24CPU
+#+caption: Trace from NBody benchmark with 1 GPU + 16/24 threads.
+#+RESULTS: fig:rastro:nbody_1GPU_16_24CPU
+[[file:figuras/rastros_idcin2/nbody_1GPU_16_24_CPU.pdf]]
+
+#+name: fig:rastro:nbody_1GPU_16_26CPU
+#+caption: Trace from NBody benchmark with 1 GPU + 16/26 threads.
+#+RESULTS: fig:rastro:nbody_1GPU_16_26CPU
+[[file:figuras/rastros_idcin2/nbody_1GPU_16_26_CPU.pdf]]
+
+#+LATEX: \FloatBarrier
+**** StarPU+OpenMP - resultados estranhos:
+***** Script :noexport:
+#+begin_src R :session org-R
+# Load ggplot and plyr just for the following cases
+library(ggplot2)
+library(plyr)
+library(data.table)
+library(RColorBrewer) 
+
+# Defining non-computation states:
+#def_states<-c("Initializing","Deinitializing","Overhead","Nothing","Sleeping","Freeing","Allocating","WritingBack","FetchingInput","PushingOutput","Callback","Progressing","Unpartitioning","AllocatingReuse","Reclaiming","DriverCopy","DriverCopyAsync","Scheduling","Executing")
+def_states<-c("Initializing","Deinitializing","Overhead","Nothing","Freeing","Allocating","WritingBack","PushingOutput","Callback","Progressing","Unpartitioning","AllocatingReuse","Reclaiming","Scheduling",
+              "12funcTimeStep", 
+              "14funcStepFactor", 
+              #"15funcComputeFlux",
+              "8funcCopy"
+              )
+
+# Function for reading .csv file
+read_df <- function(file,range1,range2) {
+	df<-read.csv(file, header=FALSE, strip.white=TRUE)
+	names(df) <- c("Nature","ResourceId","Type","Start","End","Duration", "Depth", "Value")
+	df = df[!(names(df) %in% c("Nature","Type", "Depth"))]
+	df$Origin<-as.factor(as.character(file))
+
+	# Changing names if needed:
+	df$Value <- as.character(df$Value)
+	df$Value <- ifelse(df$Value == "F", "Freeing", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "A", "Allocating", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "W", "WritingBack", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "No", "Nothing", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "I", "Initializing", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "D", "Deinitializing", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "Fi", "FetchingInput", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "Po", "PushingOutput", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "C", "Callback", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "B", "Overhead", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "Sc", "Scheduling", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "E", "Executing", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "Sl", "Sleeping", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "P", "Progressing", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "U", "Unpartitioning", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "Ar", "AllocatingReuse", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "R", "Reclaiming", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "Co", "DriverCopy", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "CoA", "DriverCopyAsync", as.character(df$Value))
+	df$Value <- ifelse(df$Value == "11funcHotspot", "Computing Hotspot", as.character(df$Value))
+
+	# Small cleanup
+	df$Start<-round(df$Start,digit=1)
+	df$End<-round(df$End,digit=1)
+	df$ResourceId<-as.factor(df$ResourceId)
+	df$Value<-as.factor(df$Value)
+
+	# Start from zero
+	m <- min(df$Start)
+	df$Start <- df$Start - m
+	df$End <- df$Start+df$Duration
+
+	# Return data frame
+	df
+}
+
+input_traces <- c("./dados/idcin-2/rastros/starpu+omp/hotspot_3GPU_10CPU.trace.csv",
+                  "./dados/idcin-2/rastros/starpu+omp/hotspot_3GPU_12CPU.trace.csv",
+                  "./dados/idcin-2/rastros/starpu+omp/cfd_2GPU_4CPU.trace.csv",
+                  "./dados/idcin-2/rastros/starpu+omp/cfd_2GPU_6CPU.trace.csv")
+
+
+idx <- 1
+for (i in 1:(length(input_traces)/2)) {
+	df<-data.frame()
+	
+	dfs<-read_df(input_traces[idx])
+	df<-rbindlist(list(df,dfs))
+  
+	dfs<-read_df(input_traces[idx+1])
+	df<-rbindlist(list(df,dfs))
+
+	# rename origin
+	df[grep("3GPU_10CPU", df$Origin), "Origin"] <- "3 GPUs + 10 cores"
+	df[grep("3GPU_12CPU", df$Origin), "Origin"] <- "3 GPUs + 12 cores"
+      df[grep("2GPU_4CPU", df$Origin), "Origin"]  <- "2 GPUs + 4 cores"
+	df[grep("2GPU_6CPU", df$Origin), "Origin"]  <- "2 GPUs + 6 cores"
+
+	# Color palettes
+	colourCount = length(unique(df$Value))
+	getPalette = colorRampPalette(brewer.pal(9, "Set1"))
+
+	# Order of Value so we can have good colors
+	ker_states<-as.character(unique(df[!(df$Value %in% def_states),Value]))
+	ordered_states<-append(sort(ker_states), def_states)
+	df$Value <- factor(df$Value, levels=ordered_states)
+
+	# Order of ResourceId so we can have y-axis
+	df$ResourceId <- factor(df$ResourceId, levels=sort(as.character(unique(df$ResourceId))))
+
+	# Select only computation kernels
+	df1 <- df[!(df$Value %in% def_states),]
+	
+	# Start from zero
+	m <- min(df1$Start)
+	df1$Start <- df1$Start - m
+	df1$End <- df1$Start+df1$Duration
+
+	# Plot
+	plot <- ggplot(df1,aes(x=Start,xend=End, y=factor(ResourceId), yend=factor(ResourceId),color=Value)) + 
+		theme_bw() + 
+              #scale_color_manual(name="State",values=getPalette(colourCount)) + 
+              scale_color_manual(values=c("#FF0000", "#00FF00", "#0000FF", "#FF1493", 
+                                          "#FFFF00", "#FFA500", "#2F4F4F", "#006400", 
+                                          "#000000", "#1E90FF")) +
+		geom_segment(size=4) + 
+              ylab("Resource") + 
+              xlab("Time [ms]") + 
+		facet_wrap(~Origin,ncol=1,scale="free_y")
+	
+	bench <- "bench"
+	if(grepl("cfd", input_traces[idx]))
+		bench <- "cfd"
+	else if (grepl("hotspot", input_traces[idx]))
+		bench <- "hotspot"
+		
+	gpus <- 0
+	if(grepl("1GPU", input_traces[idx]))
+		gpus <- 1
+	else if(grepl("2GPU", input_traces[idx]))
+		gpus <- 2
+	else if(grepl("3GPU", input_traces[idx]))
+		gpus <- 3
+	else if(grepl("4GPU", input_traces[idx]))
+		gpus <- 4
+	
+      bench <- paste("figuras/rastros_idcin2/starpu+omp", bench, sep="/")
+	name <- paste(bench, gpus, "GPU.pdf", sep="_")
+      #print(name)
+	
+	ggsave(filename=name, plot=plot, height=10, width=9)
+	idx <- idx+2
+}
+#+end_src
+***** Hotspot:
+queda de rendimento de 10 para 12 threads.
+#+name: fig:rastro:starpu_omp:hotspot_3GPU_10CPU_12CPU
+#+caption: Trace from Hotspot benchmark (StarPU+OpenMP) with 3 GPU + 10/12 threads.
+#+RESULTS: fig:rastro:starpu_omp:hotspot_3GPU_10CPU_12CPU
+[[file:figuras/rastros_idcin2/starpu+omp/hotspot_3_GPU.pdf]]
+#+LATEX: \FloatBarrier
+***** CFD:
+desempenho bem baixo com 4 threads em relação à 6 threads.
+#+name: fig:rastro:starpu_omp:cfd_2GPU_4CPU_6CPU
+#+caption: Trace from CFD benchmark (StarPU+OpenMP) with 2 GPU + 4/6 threads.
+#+RESULTS: fig:rastro:starpu_omp:cfd_2GPU_4CPU_6CPU
+[[file:figuras/rastros_idcin2/starpu+omp/cfd_2_GPU.pdf]]
+#+LATEX: \FloatBarrier
+*** Perfmodel StarPU+OpenMP
+**** Calibragem das tarefas CFD - Size: 131072 -
+comprovação do efeito NUMA, com piora no tempo a partir de 14 threads para os
+dois tamanhos de bloco:
+#+name: fig:starpu+omp:perfmodel:cfd
+#+attr_latex: :width .5\textwidth
+#+caption: StarPU+OpenMP perfmodel from CFD benchmark - Size: 131072.
+#+RESULTS: fig:starpu+omp:perfmodel:cfd
+[[file:figuras/perfmodel_idcin2/starpu+omp/cfd_perfmodel.pdf]]
+#+LATEX: \FloatBarrier
+**** Calibragem das tarefas Hotspot - Size: 16384 x 16384 -
+não há ocorrência do efeito NUMA:
+#+name: fig:starpu+omp:perfmodel:hotspot
+#+attr_latex: :width .5\textwidth
+#+caption: StarPU+OpenMP perfmodel from Hotspot benchmark - Size: 16384 x 16384.
+#+RESULTS: fig:starpu+omp:perfmodel:hotspot
+[[file:figuras/perfmodel_idcin2/starpu+omp/hotspot_perfmodel.pdf]]
+#+LATEX: \FloatBarrier
+**** Calibragem das tarefas NBody - Size: 98304 - 
+não há ocorrência do efeito NUMA:
+#+name: fig:starpu+omp:perfmodel:nbody
+#+attr_latex: :width .5\textwidth
+#+caption: StarPU+OpenMP perfmodel from NBody benchmark - Size: 98304.
+#+RESULTS: fig:starpu+omp:perfmodel:nbody
+[[file:figuras/perfmodel_idcin2/starpu+omp/nbody_perfmodel.pdf]]
+#+LATEX: \FloatBarrier
+*** Perfmodel StarPU+Kaapi
+**** Calibragem das tarefas CFD - Size: 131072 -
+comprovação do efeito NUMA, com piora no tempo a partir de 14 threads para os
+dois tamanhos de bloco:
+#+name: fig:starpu+kaapi:perfmodel:cfd
+#+attr_latex: :width .5\textwidth
+#+caption: StarPU+Kaapi perfmodel from CFD benchmark - Size: 131072.
+#+RESULTS: fig:starpu+kaapi:perfmodel:cfd
+[[file:figuras/perfmodel_idcin2/starpu+kaapi/cfd_perfmodel.pdf]]
+#+LATEX: \FloatBarrier
+**** Calibragem das tarefas Hotspot - Size: 16384 x 16384 -
+não há ocorrência do efeito NUMA:
+#+name: fig:starpu+kaapi:perfmodel:hotspot
+#+attr_latex: :width .5\textwidth
+#+caption: StarPU+Kaapi perfmodel from Hotspot benchmark - Size: 16384 x 16384.
+#+RESULTS: fig:starpu+kaapi:perfmodel:hotspot
+[[file:figuras/perfmodel_idcin2/starpu+kaapi/hotspot_perfmodel.pdf]]
+#+LATEX: \FloatBarrier
+**** Calibragem das tarefas NBody - Size: 98304 - 
+não há ocorrência do efeito NUMA:
+#+name: fig:starpu+kaapi:perfmodel:nbody
+#+attr_latex: :width .5\textwidth
+#+caption: StarPU+Kaapi perfmodel from NBody benchmark - Size: 98304.
+#+RESULTS: fig:starpu+kaapi:perfmodel:nbody
+[[file:figuras/perfmodel_idcin2/starpu+kaapi/nbody_perfmodel.pdf]]
+#+LATEX: \FloatBarrier
+*** Overhead da API
+Comparado o tempo sequencial com o tempo obtido pela API executando
+com 1 thread.
+O gráfico de overhead demosntra que o uso da HPSM traz um custo para a
+execução que varia de acordo com a aplicação. 
+Com a Hotspot o sobrecusto foi praticamente 0, enquanto que com a
+Hotspot o custo é maior, com os tempos de execução aumento até 14%.
+#+name: fig:overhead
+#+begin_src R :results output graphics :file "figuras/resultados_idcin2/overhead.pdf" :exports results :width 8 :height 6 :session org-R 
+library(ggplot2)
+library(plyr)
+entry <- c("BENCH", "backend", "size", "block_size", "thread", "gpus")
+dados_all <- read.csv("./dados/idcin-2/data_R.csv", header=TRUE, sep=";")
+serial <- dados_all[grep("^SERIAL$",dados_all$backend),]
+
+serial_stat <- ddply(serial, entry, summarise,
+                     n=length(time), mean=mean(time), sd=sd(time),
+                     se=sd/sqrt(n), ci=se*qt(.95/2 + .5, n-1))
+
+#eliminate SERIAL                     
+dados <- dados_all[dados_all$backend != "SERIAL",] 
+# only 1 cpu executions
+dados <- dados[dados$thread == 1,]
+dados <- dados[dados$gpus == 0,]
+
+#calculate speedup
+dados$speedup <- 1:nrow(dados)
+for(i in 1:nrow(dados)) {
+    name <- dados[i,]$BENCH
+    sz <- dados[i,]$size
+    tserial <- serial_stat[(serial_stat$BENCH == name) & (serial_stat$size == sz),]$mean
+    dados[i,]$speedup <- dados[i,]$time / tserial
+}
+
+# rename backends
+dados$backend <- ifelse(dados$backend == "PARALLEL_BACK_STARPU", "StarPU", as.character(dados$backend))
+dados$backend <- ifelse(dados$backend == "PARALLEL_BACK_OPENMP", "OpenMP", as.character(dados$backend))
+dados$backend <- ifelse(dados$backend == "PARALLEL_BACK_SERIAL", "Sequencial", as.character(dados$backend))
+
+dados_stat <- ddply(dados, entry, summarise, 
+                    n=length(speedup), mean=mean(speedup), sd=sd(speedup), se=sd/sqrt(n),
+                    ci=se*qt(.95/2 + .5, n-1))
+
+#dados_stat                   
+# The errorbars overlapped, so use position_dodge to move them horizontally
+#pd <- position_dodge(0.1) # move them .05 to the left and right
+
+ggplot(dados_stat, aes(x=factor(backend), fill=BENCH, y=mean))+
+    geom_bar(stat="identity", position="dodge") +
+    theme_bw() +
+    scale_y_continuous(limits=c(0,1.2), breaks=seq(0,1.2,0.1)) +
+    xlab("Back-end") +
+    ylab("Time Parallel/Time Serial")  
+#+end_src
+#+caption: API overhead.
+#+RESULTS: fig:overhead
+[[file:figuras/resultados_idcin2/overhead.pdf]]
+#+LATEX: \FloatBarrier
+
+
+
